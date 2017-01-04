@@ -3,15 +3,14 @@ var moment = require('moment');
 var GoogleSpreadsheet = require("google-sheets-node-api");
 
 var creds = JSON.parse(process.env.SHEETS_CREDENTIALS.replace(/'/g, '"'));
-var SHEETS_ID = process.env.SHEETS_ID;
-var starchSheet = new GoogleSpreadsheet(SHEETS_ID);
 
 //Main export
-module.exports = function ()
+module.exports = function (SHEETS_ID)
 {
     var self = this;
     self.postError = postError;
 
+    var starchSheet = new GoogleSpreadsheet(SHEETS_ID);
     return self;
 
     /* Public */
@@ -37,7 +36,7 @@ module.exports = function ()
             var matchingRow = findMatchingRow(data, worksheet.formattedRows);
 
             if (!matchingRow) return addRow(worksheet, data);
-            else if (!moment(matchingRow.date, 'MM/DD/YYYY').isSame(moment(), 'day'))
+            else if (!matchingRow.date || !moment(matchingRow.date, 'MM/DD/YYYY').isSame(moment(), 'day'))
             {
                 var rowToUpdate = worksheet.rowsById[matchingRow.id];
                 if (!rowToUpdate) throw new Error('Could not update row with id: ' + row.id + ' for worksheet: ' + worksheet.title);
@@ -54,7 +53,7 @@ module.exports = function ()
     /* Private */
     function addRow(ws, data)
     {
-        var newRow = {};
+        var newRow = {date: moment().format('MM/DD/YYYY')};
         for (var key in data)
         {
             if (!data.hasOwnProperty(key)) continue;

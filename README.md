@@ -24,7 +24,7 @@ var sheet = new starchupSheets();
 ```
 ....
 }).catch(function(e) {
-	sheet.post(e);
+	sheet.postError(e);
 });
 ```
 

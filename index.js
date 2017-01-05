@@ -2,7 +2,17 @@
 var moment = require('moment');
 var GoogleSpreadsheet = require("google-sheets-node-api");
 
-var creds = JSON.parse(process.env.SHEETS_CREDENTIALS.replace(/'/g, '"'));
+var hasCreds = true;
+var creds;
+try
+{
+    creds = process.env.SHEETS_CREDENTIALS;
+    creds = JSON.parse(creds.replace(/'/g, '"'));
+}
+catch (e)
+{
+    hasCreds = false;
+}
 
 //Main export
 module.exports = function (SHEETS_ID)
@@ -16,6 +26,8 @@ module.exports = function (SHEETS_ID)
     /* Public */
     function postError(data)
     {
+        //If missing credentials, do nothing
+        if (!hasCreds) return Promise.resolve();
         if (!data || !data.type) throw new Error('Error data must have type specified');
 
         return checkReady().then(function (sheet)
@@ -53,7 +65,9 @@ module.exports = function (SHEETS_ID)
     /* Private */
     function addRow(ws, data)
     {
-        var newRow = {date: moment().format('MM/DD/YYYY')};
+        var newRow = {
+            date: moment().format('MM/DD/YYYY')
+        };
         for (var key in data)
         {
             if (!data.hasOwnProperty(key)) continue;

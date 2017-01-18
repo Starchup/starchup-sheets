@@ -2,16 +2,21 @@
 var moment = require('moment');
 var GoogleSpreadsheet = require("google-sheets-node-api");
 
-var hasCreds = true;
+var hasCreds = !!process.env.SHEETS_CREDENTIALS;
+var parsedCreds = false;
+var parsedCredsError;
 var creds;
 try
 {
     creds = process.env.SHEETS_CREDENTIALS;
     creds = JSON.parse(creds.replace(/'/g, '"'));
+    parsedCreds = true;
 }
 catch (e)
 {
-    hasCreds = false;
+    parsedCredsError = new Error('Unable to parse Google sheets credentials. ' + e.message);
+    parsedCredsError.code = 401;
+    parsedCreds = false;
 }
 
 //Main export
@@ -26,9 +31,25 @@ module.exports = function (SHEETS_ID)
     /* Public */
     function postError(data)
     {
-        //If missing credentials, do nothing
-        if (!hasCreds) return Promise.resolve();
-        if (!data || !data.type) throw new Error('Error data must have type specified');
+        //If missing credentials, 404 error
+        if (!hasCreds)
+        {
+            var missingCredsError = new Error('No Google sheets credentials found');
+            missingCredsError.code = 404;
+            return Promise.reject(missingCredsError);
+        }
+        //If cannot parse credentials, 401 error
+        if (!parsedCreds)
+        {
+            if (parsedCredsError) return Promise.reject(parsedCredsError);
+            else
+            {
+                var e = new Error('Unable to parse Google sheets credentials.');
+                e.code = 401;
+                return Promise.reject(e);
+            }
+        }
+        if (!data || !data.type) return Promise.reject(new Error('Error data must have type specified'));
 
         return checkReady().then(function (sheet)
         {

@@ -132,7 +132,8 @@ module.exports = function (SHEETS_ID)
                 //Compare values, ignoring date
                 if (row[key.toLowerCase()] && data[key] && key.toLowerCase() !== 'date')
                 {
-                    if (row[key.toLowerCase()] !== data[key].toString())
+                    //Only compare first 400 characters to see if error message is roughly the same
+                    if (row[key.toLowerCase()].substring(0, 400) !== data[key].toString().substring(0, 400))
                     {
                         differentKeys.push(key);
                     }
